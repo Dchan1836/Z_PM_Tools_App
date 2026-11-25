@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: zpm-postgres
+    environment:
+      POSTGRES_USER: zpm
+      POSTGRES_PASSWORD: zpm
+      POSTGRES_DB: zpm
+    ports:
+      - "5433:5432"
+    volumes:
+      - zpm-pg:/var/lib/postgresql/data
+
+volumes:
+  zpm-pg:
