@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { assignmentClass, can, fmt, statusClass } from "../format.js";
-import { Modal, PeopleSelect, Sheet } from "../components/ui.jsx";
+import { Modal, PeopleSelect, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { Gantt, PlanViewToggle, usePlanView } from "../components/Gantt.jsx";
 import { useFocusTaskId, useGo, useProject, useRun } from "../store/hooks.js";
 
@@ -18,6 +18,7 @@ export default function Master() {
   const [detail, setDetail] = useState(focusTaskId ? state.tasks.find((task) => task.id === focusTaskId) : null);
   const [shiftDays, setShiftDays] = useState(5);
   const [planView, setPlanView] = usePlanView();
+  const { sort, toggle: sortBy, ordered } = useSort();
 
   const tasks = useMemo(() => {
     return state.tasks.filter((task) => {
@@ -27,6 +28,7 @@ export default function Master() {
       return hay.includes(query.trim().toLowerCase());
     });
   }, [state.tasks, query, activeView]);
+  const tableTasks = ordered(tasks, taskColumn);
 
   function toggle(id) {
     setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -99,26 +101,26 @@ export default function Master() {
           <thead>
             <tr>
               <th className="task" rowSpan={2} />
-              <th className="task" rowSpan={2}>Task starts</th>
-              <th className="task" rowSpan={2}>Pillar / Area</th>
-              <th className="task" rowSpan={2}>Task</th>
-              <th className="task" rowSpan={2}>Task owner</th>
-              <th colSpan={2}>Start date</th>
-              <th colSpan={2}>End date</th>
-              <th rowSpan={2}>Status</th>
-              <th rowSpan={2}>Percent complete</th>
-              <th rowSpan={2}>Late start</th>
-              <th rowSpan={2}>Actions</th>
+              <th className="task" rowSpan={2}><SortButton label="Task starts" column="window" sort={sort} onSort={sortBy} /></th>
+              <th className="task" rowSpan={2}><SortButton label="Pillar / Area" column="pillar" sort={sort} onSort={sortBy} /></th>
+              <th className="task" rowSpan={2}><SortButton label="Task" column="name" sort={sort} onSort={sortBy} /></th>
+              <th className="task" rowSpan={2}><SortButton label="Task owner" column="owner" sort={sort} onSort={sortBy} /></th>
+              <th colSpan={2}><SortButton label="Start date" column="start" sort={sort} onSort={sortBy} /></th>
+              <th colSpan={2}><SortButton label="End date" column="end" sort={sort} onSort={sortBy} /></th>
+              <th rowSpan={2}><SortButton label="Status" column="status" sort={sort} onSort={sortBy} /></th>
+              <th rowSpan={2}><SortButton label="Percent complete" column="percent" sort={sort} onSort={sortBy} /></th>
+              <th rowSpan={2}><SortButton label="Late start" column="lateStart" sort={sort} onSort={sortBy} /></th>
+              <th rowSpan={2}><SortButton label="Actions" column="actions" sort={sort} onSort={sortBy} /></th>
             </tr>
             <tr>
-              <th>Planned</th>
-              <th>Actual</th>
-              <th>Planned</th>
-              <th>Actual completion</th>
+              <th><SortButton label="Planned" column="plannedStart" sort={sort} onSort={sortBy} /></th>
+              <th><SortButton label="Actual" column="actualStart" sort={sort} onSort={sortBy} /></th>
+              <th><SortButton label="Planned" column="plannedEnd" sort={sort} onSort={sortBy} /></th>
+              <th><SortButton label="Actual completion" column="actualEnd" sort={sort} onSort={sortBy} /></th>
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task) => {
+            {tableTasks.map((task) => {
               const tone = `${statusClass(task.status)} ${assignmentClass(task.assignmentStatus)}`;
               const mine = task.ownerId === state.me.id && task.assignmentStatus === "accepted";
               const canPlan = editable;
@@ -185,6 +187,22 @@ export default function Master() {
       ) : null}
     </section>
   );
+}
+
+function taskColumn(task, key) {
+  if (key === "window") return task.window;
+  if (key === "pillar") return task.pillar;
+  if (key === "name") return task.name;
+  if (key === "owner") return task.ownerName;
+  if (key === "start" || key === "plannedStart") return task.plannedStart;
+  if (key === "actualStart") return task.actualStart;
+  if (key === "end" || key === "plannedEnd") return task.plannedEnd;
+  if (key === "actualEnd") return task.actualEnd;
+  if (key === "status") return task.status;
+  if (key === "percent") return task.percent;
+  if (key === "lateStart") return task.lateStart;
+  if (key === "actions") return task.inReport ? "In report" : "";
+  return "";
 }
 
 function matchView(task, filters) {

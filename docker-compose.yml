@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: zpm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zpm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zpm}
+      POSTGRES_DB: zpm
+    volumes:
+      - zpm-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zpm -d zpm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: zpm-app
+    restart: unless-stopped
+    env_file:
+      - server/.env
+    environment:
+      PORT: "4000"
+      NODE_ENV: production
+      CLIENT_DIST: /app/client/dist
+      DATABASE_URL: postgresql://zpm:${POSTGRES_PASSWORD:-zpm}@postgres:5432/zpm
+      BACKUP_VIA_DOCKER: "0"
+    volumes:
+      - zpm-uploads:/app/server/uploads
+      - zpm-backups:/app/server/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  zpm-pg:
+    name: zpm-pg
+  zpm-uploads:
+    name: zpm-uploads
+  zpm-backups:
+    name: zpm-backups

@@ -1,10 +1,12 @@
 import { spawn } from "child_process";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const python = path.join(root, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+const venvPython = path.join(root, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+const python = fs.existsSync(venvPython) ? venvPython : (process.env.PYTHON || "python3");
 const script = path.join(root, "graph", "links.py");
 const NODE = /^(user|task|meeting|issue|tracker|decision|report|folder|message):[A-Za-z0-9_-]+$/;
 

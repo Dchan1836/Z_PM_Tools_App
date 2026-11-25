@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { can } from "../format.js";
-import { Modal, Sheet } from "../components/ui.jsx";
+import { Modal, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { useFocusTaskId, useProject, useRun } from "../store/hooks.js";
 
 const TYPES = ["text", "date", "status", "number"];
@@ -42,6 +42,14 @@ export default function Trackers() {
 
 function TrackerGrid({ tracker, run, editable }) {
   const milestones = tracker.columns.filter((column) => column.milestone);
+  const { sort, toggle, ordered } = useSort();
+  const rows = ordered(tracker.rows, (row, key) => {
+    if (key === "rowPercent") return row.rowPercent;
+    const column = tracker.columns.find((item) => item.id === key);
+    if (!column) return "";
+    if (column.dataType === "rollup") return row.rollups?.[column.id]?.text || "";
+    return row.cells?.[column.id] || "";
+  });
   return (
     <div className="card">
       <div className="inline" style={{ justifyContent: "space-between" }}>
@@ -54,17 +62,20 @@ function TrackerGrid({ tracker, run, editable }) {
             <tr>
               {tracker.columns.map((column) => (
                 <th key={column.id}>
-                  {column.name}
-                  {column.milestone ? ` · M${column.milestone}` : ""}
-                  {column.required ? " *" : ""}
+                  <SortButton
+                    label={`${column.name}${column.milestone ? ` · M${column.milestone}` : ""}${column.required ? " *" : ""}`}
+                    column={column.id}
+                    sort={sort}
+                    onSort={toggle}
+                  />
                 </th>
               ))}
-              <th>Row %</th>
+              <th><SortButton label="Row %" column="rowPercent" sort={sort} onSort={toggle} /></th>
               {editable ? <th /> : null}
             </tr>
           </thead>
           <tbody>
-            {tracker.rows.map((row) => (
+            {rows.map((row) => (
               <tr key={row.id}>
                 {tracker.columns.map((column) => (
                   <td key={column.id}>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { fmt } from "../format.js";
-import { Sheet } from "../components/ui.jsx";
+import { Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { useFocusTaskId, useProject, useRun } from "../store/hooks.js";
 
 export default function RootCause() {
@@ -13,6 +13,15 @@ export default function RootCause() {
   const chain = useMemo(() => selected ? causeChain(state.tasks, selected) : [], [state.tasks, selected]);
   const [note, setNote] = useState("Can you send an update on what is blocking this task?");
   const [sent, setSent] = useState("");
+  const { sort, toggle, ordered } = useSort();
+  const tableRows = ordered(levelOne, (task, key) => {
+    if (key === "name") return task.name;
+    if (key === "owner") return task.ownerName;
+    if (key === "plannedEnd") return task.plannedEnd;
+    if (key === "status") return task.status;
+    if (key === "lateStart") return task.lateStart;
+    return "";
+  });
 
   const span = chain.reduce((range, task) => {
     for (const value of [task.plannedStart, task.plannedEnd, task.actualStart, task.actualEnd]) {
@@ -33,10 +42,16 @@ export default function RootCause() {
       <div className="sheet-wrap">
         <Sheet>
           <thead>
-            <tr><th className="task">Task</th><th>Owner</th><th>Planned end</th><th>Status</th><th>Late start</th></tr>
+            <tr>
+              <th className="task"><SortButton label="Task" column="name" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Owner" column="owner" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Planned end" column="plannedEnd" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Late start" column="lateStart" sort={sort} onSort={toggle} /></th>
+            </tr>
           </thead>
           <tbody>
-            {levelOne.map((task) => (
+            {tableRows.map((task) => (
               <tr key={task.id} className={task.status === "Late" ? "row-late" : task.status === "Complete" ? "row-green" : ""} onClick={() => setSelectedId(task.id)} style={{ cursor: "pointer", outline: task.id === selectedId ? "2px solid #305496" : undefined }}>
                 <td>{task.name}</td>
                 <td>

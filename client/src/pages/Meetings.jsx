@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fmt } from "../format.js";
-import { PeopleSelect, Sheet } from "../components/ui.jsx";
+import { PeopleSelect, Sheet, SortButton, sortRows, useSort } from "../components/ui.jsx";
 import { draftMeeting, quietAuthError, upload } from "../api.js";
 import { useAbsorb, useFocusTaskId, useProject, useRun } from "../store/hooks.js";
 import { clearMeetingNotes } from "../store/uiSlice.js";
@@ -26,9 +26,9 @@ export default function Meetings() {
   const [mode, setMode] = useState("archive");
   const [draft, setDraft] = useState(null);
   const [openId, setOpenId] = useState("");
-  const [sort, setSort] = useState({ key: "date", dir: 1 });
+  const meetingSort = useSort("date");
   const [query, setQuery] = useState("");
-  const [decisionSort, setDecisionSort] = useState({ key: "date", dir: 1 });
+  const decisionSort = useSort("date");
   const [noteText, setNoteText] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState("");
@@ -124,8 +124,24 @@ export default function Meetings() {
     setMode("edit");
   }
 
-  const notes = useMemo(() => filterSort(state.meetings, query, sort), [state.meetings, query, sort]);
-  const decisions = useMemo(() => filterSort(state.decisions, query, decisionSort), [state.decisions, query, decisionSort]);
+  const notes = useMemo(
+    () => filterSort(state.meetings, query, meetingSort.sort, (row, key) => {
+      if (key === "date") return row.date;
+      if (key === "title") return row.source === "upload" ? row.fileName : row.title;
+      if (key === "owner") return row.source === "upload" ? row.ownerEmail : (row.facilitatorName || row.ownerEmail);
+      return "";
+    }),
+    [state.meetings, query, meetingSort.sort],
+  );
+  const decisions = useMemo(
+    () => filterSort(state.decisions, query, decisionSort.sort, (row, key) => {
+      if (key === "date") return row.date;
+      if (key === "title") return row.source === "upload" ? row.fileName : row.title;
+      if (key === "owner") return row.ownerEmail;
+      return "";
+    }),
+    [state.decisions, query, decisionSort.sort],
+  );
 
   return (
     <section>
@@ -191,8 +207,8 @@ export default function Meetings() {
           <ArchiveColumn
             title="Meeting notes"
             rows={notes.filter((meeting) => !focusTaskId || meeting.taskId === focusTaskId)}
-            sort={sort}
-            setSort={setSort}
+            sort={meetingSort.sort}
+            onSort={meetingSort.toggle}
             query={query}
             setQuery={setQuery}
             onUpload={async (file) => absorb(await upload("meeting", { notes: "" }, file))}
@@ -215,9 +231,9 @@ export default function Meetings() {
               <Sheet>
                 <thead>
                   <tr>
-                    {["date", "title", "ownerEmail"].map((key) => (
-                      <th key={key}><button className="linkish" style={{ color: "white" }} onClick={() => setDecisionSort({ key, dir: decisionSort.key === key ? -decisionSort.dir : 1 })}>{key === "ownerEmail" ? "Owner" : key}</button></th>
-                    ))}
+                    <th><SortButton label="Date" column="date" sort={decisionSort.sort} onSort={decisionSort.toggle} /></th>
+                    <th><SortButton label="Title" column="title" sort={decisionSort.sort} onSort={decisionSort.toggle} /></th>
+                    <th><SortButton label="Owner" column="owner" sort={decisionSort.sort} onSort={decisionSort.toggle} /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -244,16 +260,16 @@ export default function Meetings() {
   );
 }
 
-function filterSort(rows, query, sort) {
+function filterSort(rows, query, sort, valueOf) {
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((row) => {
     if (!q) return true;
     return JSON.stringify(row).toLowerCase().includes(q);
   });
-  return [...filtered].sort((a, b) => String(a[sort.key] || "").localeCompare(String(b[sort.key] || "")) * sort.dir);
+  return sortRows(filtered, sort.key, sort.dir, valueOf);
 }
 
-function ArchiveColumn({ title, rows, sort, setSort, query, setQuery, onUpload, detail, renderRow }) {
+function ArchiveColumn({ title, rows, sort, onSort, query, setQuery, onUpload, detail, renderRow }) {
   return (
     <div>
       <div className="toolbar" style={{ marginBottom: 8 }}>
@@ -268,9 +284,9 @@ function ArchiveColumn({ title, rows, sort, setSort, query, setQuery, onUpload, 
         <Sheet>
           <thead>
             <tr>
-              {[["date", "Date"], ["title", "Title"], ["owner", "Owner"]].map(([key, label]) => (
-                <th key={key}><button className="linkish" style={{ color: "white" }} onClick={() => setSort({ key: key === "owner" ? "facilitatorName" : key, dir: sort.key === key ? -sort.dir : 1 })}>{label}</button></th>
-              ))}
+              <th><SortButton label="Date" column="date" sort={sort} onSort={onSort} /></th>
+              <th><SortButton label="Title" column="title" sort={sort} onSort={onSort} /></th>
+              <th><SortButton label="Owner" column="owner" sort={sort} onSort={onSort} /></th>
             </tr>
           </thead>
           <tbody>{rows.map((meeting) => renderRow(meeting))}</tbody>
@@ -293,28 +309,48 @@ function MeetingRead({ meeting }) {
           <strong>Topic: {item.topic}</strong>
           <div>Owner: {item.ownerName}</div>
           <div>Notes: {item.notes || "—"}</div>
-          {item.actions?.length ? (
-            <Sheet style={{ marginTop: 8, background: "white" }}>
-              <thead>
-                <tr><th>#</th><th>Action</th><th>Owner</th><th>Due</th><th>Completed</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {item.actions.map((action, index) => (
-                  <tr key={action.id} className={action.tone === "red" ? "row-late" : action.tone === "green" ? "row-green" : ""}>
-                    <td>{index + 1}</td>
-                    <td>{action.action}</td>
-                    <td>{action.ownerName}</td>
-                    <td>{fmt(action.due)}</td>
-                    <td>{fmt(action.actualEnd)}</td>
-                    <td>{action.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Sheet>
-          ) : null}
+          {item.actions?.length ? <ActionSheet actions={item.actions} /> : null}
         </div>
       ))}
     </article>
+  );
+}
+
+function ActionSheet({ actions }) {
+  const { sort, toggle, ordered } = useSort();
+  const rows = ordered(actions, (action, key) => {
+    if (key === "action") return action.action;
+    if (key === "owner") return action.ownerName;
+    if (key === "due") return action.due;
+    if (key === "completed") return action.actualEnd;
+    if (key === "status") return action.status;
+    return "";
+  });
+  return (
+    <Sheet style={{ marginTop: 8, background: "white" }}>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th><SortButton label="Action" column="action" sort={sort} onSort={toggle} /></th>
+          <th><SortButton label="Owner" column="owner" sort={sort} onSort={toggle} /></th>
+          <th><SortButton label="Due" column="due" sort={sort} onSort={toggle} /></th>
+          <th><SortButton label="Completed" column="completed" sort={sort} onSort={toggle} /></th>
+          <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((action, index) => (
+          <tr key={action.id} className={action.tone === "red" ? "row-late" : action.tone === "green" ? "row-green" : ""}>
+            <td>{index + 1}</td>
+            <td>{action.action}</td>
+            <td>{action.ownerName}</td>
+            <td>{fmt(action.due)}</td>
+            <td>{fmt(action.actualEnd)}</td>
+            <td>{action.status}</td>
+          </tr>
+        ))}
+      </tbody>
+    </Sheet>
   );
 }
 

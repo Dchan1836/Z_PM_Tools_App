@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { autoLogoutEnabled, downloadWorkbook, quietAuthError, saveBackup, setAutoLogout } from "../api.js";
 import { can, PERMISSION_LADDER, sitesOf, visnsOf } from "../format.js";
 import { useProject, useRestore, useRun } from "../store/hooks.js";
-import { Modal, Panel, Sheet } from "../components/ui.jsx";
+import { Modal, Panel, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import GraphAnalytics from "./GraphAnalytics.jsx";
 import GraphMap from "./GraphMap.jsx";
 
@@ -186,7 +186,13 @@ function RecordFinder({ state, run }) {
     if (kind !== "all" && row.kind !== kind) return false;
     return terms.every((term) => row.haystack.includes(term));
   });
-  const shown = matches.slice(0, 80);
+  const { sort, toggle, ordered } = useSort("type");
+  const shown = ordered(matches, (row, key) => {
+    if (key === "type") return row.type;
+    if (key === "name") return row.title;
+    if (key === "detail") return row.detail;
+    return "";
+  }).slice(0, 80);
 
   async function remove() {
     if (!pending) return;
@@ -217,7 +223,12 @@ function RecordFinder({ state, run }) {
       <div className="sheet-wrap">
         <Sheet>
           <thead>
-            <tr><th>Type</th><th>Name</th><th>Details</th><th /></tr>
+            <tr>
+              <th><SortButton label="Type" column="type" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Name" column="name" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Details" column="detail" sort={sort} onSort={toggle} /></th>
+              <th />
+            </tr>
           </thead>
           <tbody>
             {shown.map((row) => (
@@ -322,6 +333,16 @@ function OrgEditor({ state, run }) {
 
 function UserEditor({ state, run }) {
   const [draft, setDraft] = useState(null);
+  const { sort, toggle, ordered } = useSort("lastName");
+  const users = ordered(state.users, (user, key) => {
+    if (key === "lastName") return user.lastName;
+    if (key === "firstName") return user.firstName;
+    if (key === "phone") return user.phone;
+    if (key === "email") return user.email;
+    if (key === "role") return user.role;
+    if (key === "permission") return PERMISSION_LADDER.find((item) => item.id === user.permission)?.label || "None";
+    return "";
+  });
   return (
     <Panel
       title="Users"
@@ -330,10 +351,18 @@ function UserEditor({ state, run }) {
       <div className="sheet-wrap" style={{ marginTop: 8 }}>
         <Sheet>
           <thead>
-            <tr><th>Last name</th><th>First name</th><th>Phone</th><th>Email</th><th>Role</th><th>Permission</th><th /></tr>
+            <tr>
+              <th><SortButton label="Last name" column="lastName" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="First name" column="firstName" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Phone" column="phone" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Email" column="email" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Role" column="role" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Permission" column="permission" sort={sort} onSort={toggle} /></th>
+              <th />
+            </tr>
           </thead>
           <tbody>
-            {state.users.map((user) => (
+            {users.map((user) => (
               <tr key={user.id}>
                 <td>{user.lastName}</td>
                 <td>{user.firstName}</td>

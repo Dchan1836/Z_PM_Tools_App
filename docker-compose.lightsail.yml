@@ -1,0 +1,6 @@
+# Usage on the Lightsail instance:
+#   docker compose --env-file server/.env -f docker-compose.yml -f docker-compose.lightsail.yml up -d --build
+services:
+  app:
+    ports:
+      - "80:4000"

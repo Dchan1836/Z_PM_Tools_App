@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { fmt, statusClass, assignmentClass } from "../format.js";
-import { Modal, Sheet } from "../components/ui.jsx";
+import { Modal, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { sitesOf, visnsOf } from "../format.js";
 import { useGo, useProject, useRun } from "../store/hooks.js";
 
@@ -77,6 +77,8 @@ export default function Dashboard() {
       ];
 
   const drilled = drill ? sliceTasks(drill.key === "project" ? filtered : panels.find((panel) => panel.key === drill.key)?.tasks || [], drill.field, drill.value) : [];
+  const { sort, toggle, ordered } = useSort();
+  const drilledRows = ordered(drilled, taskColumn);
 
   return (
     <section>
@@ -166,19 +168,19 @@ export default function Dashboard() {
             <Sheet>
               <thead>
                 <tr>
-                  <th className="task">Window</th>
-                  <th className="task">Pillar / Area</th>
-                  <th className="task">Task</th>
-                  <th className="task">Owner</th>
-                  <th>Planned start</th>
-                  <th>Planned end</th>
-                  <th>Status</th>
-                  <th>%</th>
-                  <th>Links</th>
+                  <th className="task"><SortButton label="Window" column="window" sort={sort} onSort={toggle} /></th>
+                  <th className="task"><SortButton label="Pillar / Area" column="pillar" sort={sort} onSort={toggle} /></th>
+                  <th className="task"><SortButton label="Task" column="name" sort={sort} onSort={toggle} /></th>
+                  <th className="task"><SortButton label="Owner" column="owner" sort={sort} onSort={toggle} /></th>
+                  <th><SortButton label="Planned start" column="plannedStart" sort={sort} onSort={toggle} /></th>
+                  <th><SortButton label="Planned end" column="plannedEnd" sort={sort} onSort={toggle} /></th>
+                  <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
+                  <th><SortButton label="%" column="percent" sort={sort} onSort={toggle} /></th>
+                  <th><SortButton label="Links" column="links" sort={sort} onSort={toggle} /></th>
                 </tr>
               </thead>
               <tbody>
-                {drilled.map((task) => {
+                {drilledRows.map((task) => {
                   const children = state.tasks.filter((item) => item.parentId === task.id);
                   const open = expanded === task.id;
                   return (
@@ -356,6 +358,19 @@ function countSlices(tasks, valueOf, catalog) {
     color,
     value: tasks.filter((task) => valueOf(task) === id).length,
   }));
+}
+
+function taskColumn(task, key) {
+  if (key === "window") return task.window;
+  if (key === "pillar") return task.pillar;
+  if (key === "name") return task.name;
+  if (key === "owner") return task.ownerName;
+  if (key === "plannedStart") return task.plannedStart;
+  if (key === "plannedEnd") return task.plannedEnd;
+  if (key === "status") return task.status;
+  if (key === "percent") return task.percent;
+  if (key === "links") return task.trackerId ? "Tracker" : "";
+  return "";
 }
 
 function sliceTasks(tasks, field, value) {

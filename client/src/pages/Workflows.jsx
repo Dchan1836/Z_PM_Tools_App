@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { can, fmt, sitesOf, statusClass } from "../format.js";
-import { PeopleSelect, Sheet } from "../components/ui.jsx";
+import { PeopleSelect, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { Gantt, PlanViewToggle, usePlanView } from "../components/Gantt.jsx";
 import { useAppDispatch, useProject, useRun, useUi } from "../store/hooks.js";
 import { clearWorkflowDraft } from "../store/uiSlice.js";
@@ -107,6 +107,17 @@ export default function Workflows() {
 
   const selected = workflows.find((workflow) => workflow.id === selectedId) || workflows[0];
   const rows = selected ? rowsFor(tasks, selected) : [];
+  const { sort, toggle, ordered } = useSort();
+  const tableRows = ordered(rows, (row, key) => {
+    if (key === "step") return row.label;
+    if (key === "name") return row.task.name;
+    if (key === "owner") return row.task.ownerName;
+    if (key === "plannedStart") return row.task.plannedStart;
+    if (key === "plannedEnd") return row.task.plannedEnd;
+    if (key === "status") return row.task.status;
+    if (key === "depends") return row.task.predecessorName;
+    return "";
+  });
   const steps = rows.filter((row) => row.depth === 0);
   const complete = steps.filter((row) => row.task.status === "Complete").length;
   const memberIds = new Set(selected ? [selected.id, ...rows.map((row) => row.task.id)] : []);
@@ -189,17 +200,17 @@ export default function Workflows() {
                 <Sheet>
                   <thead>
                     <tr>
-                      <th>Step</th>
-                      <th className="task">Task</th>
-                      <th>Owner</th>
-                      <th>Planned start</th>
-                      <th>Planned end</th>
-                      <th>Status</th>
-                      <th>Depends on</th>
+                      <th><SortButton label="Step" column="step" sort={sort} onSort={toggle} /></th>
+                      <th className="task"><SortButton label="Task" column="name" sort={sort} onSort={toggle} /></th>
+                      <th><SortButton label="Owner" column="owner" sort={sort} onSort={toggle} /></th>
+                      <th><SortButton label="Planned start" column="plannedStart" sort={sort} onSort={toggle} /></th>
+                      <th><SortButton label="Planned end" column="plannedEnd" sort={sort} onSort={toggle} /></th>
+                      <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
+                      <th><SortButton label="Depends on" column="depends" sort={sort} onSort={toggle} /></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row) => (
+                    {tableRows.map((row) => (
                       <tr key={row.task.id} className={statusClass(row.task.status)}>
                         <td>{row.label}</td>
                         <td className={row.depth ? `task indent-${Math.min(row.depth, 3)}` : "task"}>{row.task.name}</td>

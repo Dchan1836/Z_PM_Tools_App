@@ -201,6 +201,72 @@ export function Banner({ error, notice }) {
   );
 }
 
+const RANK = {
+  "before today": 0,
+  "next 30 days": 1,
+  "from 30 to 60 days": 2,
+  "from 60 to 90 days": 3,
+  "beyond 90 days": 4,
+  low: 1,
+  medium: 2,
+  high: 3,
+};
+
+function normalizeSort(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value == null) return "";
+  const text = String(value).trim();
+  if (!text || text === "—") return "";
+  const ranked = RANK[text.toLowerCase()];
+  if (ranked != null) return ranked;
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
+  if (/^-?\d+(\.\d+)?%?$/.test(text)) return Number(text.replace("%", ""));
+  return text;
+}
+
+export function sortRows(rows, key, dir, valueOf = (row, column) => row[column]) {
+  if (!key) return rows;
+  const sign = dir < 0 ? -1 : 1;
+  return [...rows].sort((left, right) => {
+    const a = normalizeSort(valueOf(left, key));
+    const b = normalizeSort(valueOf(right, key));
+    if (a === "" || b === "") {
+      if (a === "" && b === "") return 0;
+      return a === "" ? 1 : -1;
+    }
+    const result = typeof a === "number" && typeof b === "number"
+      ? a - b
+      : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+    return result * sign;
+  });
+}
+
+export function useSort(initialKey = "") {
+  const [sort, setSort] = useState({ key: initialKey, dir: 1 });
+  function toggle(key) {
+    setSort((current) => (current.key === key ? { key, dir: current.dir * -1 } : { key, dir: 1 }));
+  }
+  function ordered(rows, valueOf) {
+    return sortRows(rows, sort.key, sort.dir, valueOf);
+  }
+  return { sort, toggle, ordered };
+}
+
+export function SortButton({ label, column, sort, onSort }) {
+  const active = sort.key === column;
+  return (
+    <button
+      type="button"
+      className={`sort-btn${active ? " on" : ""}`}
+      aria-sort={active ? (sort.dir < 0 ? "descending" : "ascending") : "none"}
+      onClick={() => onSort(column)}
+    >
+      {label}
+      {active ? <span aria-hidden="true">{sort.dir < 0 ? " ▼" : " ▲"}</span> : null}
+    </button>
+  );
+}
+
 export function PeopleSelect({ users, value, onChange, allowEmpty = true }) {
   return (
     <select value={value || ""} onChange={(event) => onChange(event.target.value)}>

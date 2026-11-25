@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { assignmentClass, fmt, statusClass } from "../format.js";
-import { PeopleSelect, Sheet } from "../components/ui.jsx";
+import { PeopleSelect, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { useGo, useProject, useRun } from "../store/hooks.js";
 
 export default function MyTasks() {
@@ -51,22 +51,33 @@ function canManage(state) {
 }
 
 function TaskRows({ tasks, go }) {
+  const { sort, toggle, ordered } = useSort();
+  const rows = ordered(tasks, (task, key) => {
+    if (key === "window") return task.window;
+    if (key === "pillar") return task.pillar;
+    if (key === "name") return task.name;
+    if (key === "plannedEnd") return task.plannedEnd;
+    if (key === "status") return task.status;
+    if (key === "percent") return task.percent;
+    if (key === "links") return task.trackerId ? "Tracker" : "";
+    return "";
+  });
   return (
     <div className="sheet-wrap">
       <Sheet>
         <thead>
           <tr>
-            <th className="task">Task starts</th>
-            <th className="task">Pillar / Area</th>
-            <th className="task">Task</th>
-            <th>Planned end</th>
-            <th>Status</th>
-            <th>%</th>
-            <th>Links</th>
+            <th className="task"><SortButton label="Task starts" column="window" sort={sort} onSort={toggle} /></th>
+            <th className="task"><SortButton label="Pillar / Area" column="pillar" sort={sort} onSort={toggle} /></th>
+            <th className="task"><SortButton label="Task" column="name" sort={sort} onSort={toggle} /></th>
+            <th><SortButton label="Planned end" column="plannedEnd" sort={sort} onSort={toggle} /></th>
+            <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
+            <th><SortButton label="%" column="percent" sort={sort} onSort={toggle} /></th>
+            <th><SortButton label="Links" column="links" sort={sort} onSort={toggle} /></th>
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {rows.map((task) => (
             <tr key={task.id} className={`${statusClass(task.status)} ${assignmentClass(task.assignmentStatus)}`}>
               <td>{task.window}</td>
               <td>{task.pillar}</td>

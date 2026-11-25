@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fmt } from "../format.js";
-import { PeopleSelect, Sheet } from "../components/ui.jsx";
+import { PeopleSelect, Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { useFocusTaskId, useProject, useRun } from "../store/hooks.js";
 
 const STATUSES = ["Open", "Monitoring", "Mitigating", "Resolved", "Closed"];
@@ -13,6 +13,17 @@ export default function Issues() {
   const [editing, setEditing] = useState(null);
   const [noteFor, setNoteFor] = useState("");
   const [note, setNote] = useState("");
+  const { sort, toggle, ordered } = useSort();
+  const tableRows = ordered(rows, (issue, key) => {
+    if (key === "title") return issue.title;
+    if (key === "priority") return issue.priority;
+    if (key === "deadline") return issue.deadline;
+    if (key === "owner") return issue.ownerName;
+    if (key === "flag") return issue.flag;
+    if (key === "resolution") return issue.resolutionDate;
+    if (key === "status") return issue.status;
+    return "";
+  });
 
   return (
     <section>
@@ -28,11 +39,19 @@ export default function Issues() {
         <Sheet>
           <thead>
             <tr>
-              <th>#</th><th>Title</th><th>Priority</th><th>Deadline</th><th>Owner</th><th>Issue / Risk</th><th>Resolution date</th><th>Status</th><th />
+              <th>#</th>
+              <th><SortButton label="Title" column="title" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Priority" column="priority" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Deadline" column="deadline" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Owner" column="owner" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Issue / Risk" column="flag" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Resolution date" column="resolution" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((issue, index) => (
+            {tableRows.map((issue, index) => (
               <tr key={issue.id} className={issue.tone === "red" ? "row-late" : issue.tone === "green" ? "row-green" : issue.tone === "yellow" ? "st-d1" : ""}>
                 <td>{index + 1}</td>
                 <td>{issue.title}</td>

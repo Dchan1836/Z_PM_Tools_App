@@ -186,6 +186,8 @@ table.sheet th, table.sheet td { border: 1px solid #d5deea; padding: 6px 8px; ve
 table.sheet.sized { table-layout: fixed; min-width: 0; }
 table.sheet.sized td { overflow: hidden; }
 table.sheet.sized input, table.sheet.sized select, table.sheet.sized .actions, table.sheet.sized td.task-name { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.sort-btn { display: inline; background: none; border: 0; color: inherit; font: inherit; font-weight: 700; cursor: pointer; padding: 0 10px 0 0; }
+.sort-btn.on { text-decoration: underline; }
 .col-resize { position: absolute; top: 0; right: 0; z-index: 4; width: 8px; height: 100%; margin: 0; padding: 0; border: 0; background: transparent; cursor: col-resize; touch-action: none; }
 .col-resize:hover, .col-resize:active { background: rgba(255, 255, 255, 0.45); }
 table.sheet thead th { position: sticky; top: 0; z-index: 2; color: white; background: var(--navy); text-align: center; }

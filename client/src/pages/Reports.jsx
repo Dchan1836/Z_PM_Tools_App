@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fmt, statusClass } from "../format.js";
-import { Sheet } from "../components/ui.jsx";
+import { Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { useProject, useRun } from "../store/hooks.js";
 
 export default function Reports() {
@@ -16,6 +16,17 @@ export default function Reports() {
   const [email, setEmail] = useState("");
   const active = state.reports.find((report) => report.id === activeId);
   const shown = active ? state.tasks.filter((task) => active.taskIds.includes(task.id)) : flagged;
+  const { sort, toggle, ordered } = useSort();
+  const tableRows = ordered(shown, (task, key) => {
+    if (key === "window") return task.window;
+    if (key === "pillar") return task.pillar;
+    if (key === "name") return task.name;
+    if (key === "owner") return task.ownerName;
+    if (key === "start") return task.plannedStart;
+    if (key === "end") return task.plannedEnd;
+    if (key === "status") return task.status;
+    return "";
+  });
 
   return (
     <section>
@@ -35,12 +46,17 @@ export default function Reports() {
         <Sheet>
           <thead>
             <tr>
-              <th className="task">Window</th><th className="task">Pillar</th><th className="task">Task</th><th className="task">Owner</th>
-              <th>Start</th><th>End</th><th>Status</th>
+              <th className="task"><SortButton label="Window" column="window" sort={sort} onSort={toggle} /></th>
+              <th className="task"><SortButton label="Pillar" column="pillar" sort={sort} onSort={toggle} /></th>
+              <th className="task"><SortButton label="Task" column="name" sort={sort} onSort={toggle} /></th>
+              <th className="task"><SortButton label="Owner" column="owner" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Start" column="start" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="End" column="end" sort={sort} onSort={toggle} /></th>
+              <th><SortButton label="Status" column="status" sort={sort} onSort={toggle} /></th>
             </tr>
           </thead>
           <tbody>
-            {shown.map((task) => (
+            {tableRows.map((task) => (
               <tr key={task.id} className={statusClass(task.status)}>
                 <td>{task.window}</td>
                 <td>{task.pillar}</td>

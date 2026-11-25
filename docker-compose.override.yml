@@ -1,0 +1,9 @@
+# Auto-loaded for local `docker compose up`.
+# Lightsail uses only docker-compose.yml + docker-compose.lightsail.yml.
+services:
+  postgres:
+    ports:
+      - "5433:5432"
+  app:
+    ports:
+      - "4000:4000"

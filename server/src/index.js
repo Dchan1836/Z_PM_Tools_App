@@ -176,8 +176,17 @@ app.post("/api/upload", requireUser, upload.single("file"), async (req, res) => 
   }
 });
 
-const port = process.env.PORT || 4000;
+const clientDist = process.env.CLIENT_DIST
+  || path.join(__dirname, "..", "..", "client", "dist");
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
+
+const port = Number(process.env.PORT || 4000);
 await initStore();
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Z PM server listening on ${port}`);
 });

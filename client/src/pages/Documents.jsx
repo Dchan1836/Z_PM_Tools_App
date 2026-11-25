@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fmt } from "../format.js";
-import { Sheet } from "../components/ui.jsx";
+import { Sheet, SortButton, useSort } from "../components/ui.jsx";
 import { upload } from "../api.js";
 import { useAbsorb, useFocusTaskId, useProject, useRun } from "../store/hooks.js";
 
@@ -11,12 +11,19 @@ export default function Documents() {
   const absorb = useAbsorb();
   const [folderId, setFolderId] = useState("");
   const [name, setName] = useState("");
+  const { sort, toggle, ordered } = useSort("name");
   const folders = [...state.folders].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   const visible = focusTaskId ? folders.filter((folder) => folder.taskId === focusTaskId || folder.taskId === "") : folders;
   const open = folders.find((folder) => folder.id === folderId);
-  const files = state.files
-    .filter((file) => file.folderId === folderId)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const files = ordered(
+    state.files.filter((file) => file.folderId === folderId),
+    (file, key) => {
+      if (key === "name") return file.name;
+      if (key === "created") return file.created;
+      if (key === "modified") return file.modified;
+      return "";
+    },
+  );
 
   return (
     <section>
@@ -58,7 +65,11 @@ export default function Documents() {
               </label>
               <Sheet>
                 <thead>
-                  <tr><th>File name</th><th>Date created</th><th>Date modified</th></tr>
+                  <tr>
+                    <th><SortButton label="File name" column="name" sort={sort} onSort={toggle} /></th>
+                    <th><SortButton label="Date created" column="created" sort={sort} onSort={toggle} /></th>
+                    <th><SortButton label="Date modified" column="modified" sort={sort} onSort={toggle} /></th>
+                  </tr>
                 </thead>
                 <tbody>
                   {files.map((file) => (
