@@ -106,18 +106,18 @@ test("chat notes with no facilitator use the person who sent the message", async
     "Raised by: Harry Leggs",
     "Harry Leggs: The shipment slipped.",
     "Action: Sally Nguyen will update the tracker by 2026-12-06",
-  ].join("\n"), createSeed(), llm, { defaultOwnerId: "u-zulfi" });
+  ].join("\n"), createSeed(), llm, { defaultOwnerId: "u-steve" });
 
-  assert.equal(draft.meeting.facilitatorId, "u-zulfi");
-  assert.equal(draft.meeting.facilitatorName, "Zulfi Khan");
-  assert.ok(draft.meeting.participantIds.includes("u-zulfi"));
+  assert.equal(draft.meeting.facilitatorId, "u-steve");
+  assert.equal(draft.meeting.facilitatorName, "Steve Khan");
+  assert.ok(draft.meeting.participantIds.includes("u-steve"));
   assert.equal(draft.meeting.agenda[0].ownerId, "u-harry");
   assert.equal(draft.meeting.agenda[0].actions[0].ownerId, "u-sally");
   assert.match(draft.warnings.join(" "), /set as the facilitator/);
 });
 
 test("a named facilitator stays in place when the chat supplies a default", async () => {
-  const draft = await draftMeetingFromNotes(notes, createSeed(), createMockLlm(), { defaultOwnerId: "u-zulfi" });
+  const draft = await draftMeetingFromNotes(notes, createSeed(), createMockLlm(), { defaultOwnerId: "u-steve" });
   assert.equal(draft.meeting.facilitatorId, "u-john");
   assert.equal(draft.warnings.some((warning) => /facilitator/.test(warning)), false);
 });

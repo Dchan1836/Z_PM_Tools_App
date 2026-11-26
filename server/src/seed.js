@@ -29,7 +29,7 @@ function task(partial) {
 
 export function createSeed() {
   const users = [
-    user("u-zulfi", "Zulfi", "Khan", "503-555-0100", "zulfi@zpm.local", "Super Admin", "organization", "Program lead"),
+    user("u-steve", "Steve", "Khan", "503-555-0100", "steve@zpm.local", "Super Admin", "organization", "Program lead", "number1pmapp"),
     user("u-bill", "Bill", "Ding", "503-555-0101", "bill.ding@zpm.local", "Project Manager", "project", "Change management"),
     user("u-john", "John", "Smith", "503-555-0102", "john.smith@zpm.local", "Tracker Editor", "tracker", "Devices"),
     user("u-harry", "Harry", "Leggs", "503-555-0103", "harry.leggs@zpm.local", "Task Owner", "", "Temp space and printers"),
@@ -198,7 +198,7 @@ export function createSeed() {
       area: "Technical",
       specialty: "Facilities",
       name: "Call Landlord",
-      ownerId: "u-zulfi",
+      ownerId: "u-steve",
       plannedStart: "2026-12-01",
       plannedEnd: "2026-11-26",
       assignmentStatus: "accepted",
@@ -224,13 +224,13 @@ export function createSeed() {
       area: "Technical",
       specialty: "Facilities",
       name: "Sign agreement",
-      ownerId: "u-zulfi",
+      ownerId: "u-steve",
       plannedStart: "2026-11-16",
       actualStart: "2026-11-16",
       plannedEnd: "2026-11-28",
       predecessorId: "t9",
       assignmentStatus: "accepted",
-      comments: [{ id: "c3", at: "2026-11-22", authorId: "u-zulfi", text: "Waiting for docs from the landlord." }],
+      comments: [{ id: "c3", at: "2026-11-22", authorId: "u-steve", text: "Waiting for docs from the landlord." }],
     }),
     task({
       id: "t11",
@@ -668,7 +668,7 @@ export function createSeed() {
       startDate: "2026-11-04",
       endDate: "2027-02-03",
       siteDetail: "Portland VA Medical Center — South Portland campus",
-      leadership: "Zulfi Khan",
+      leadership: "Steve Khan",
       revisedAt: "2026-11-24T16:00:00.000Z",
     },
     tasks,
@@ -754,12 +754,12 @@ export function createSeed() {
         isTemplate: false,
         source: "upload",
         fileName: "Steering-committee-notes.pdf",
-        ownerEmail: "zulfi@zpm.local",
+        ownerEmail: "steve@zpm.local",
         agenda: [
           {
             id: "ag-up",
             topic: "Uploaded notes",
-            ownerId: "u-zulfi",
+            ownerId: "u-steve",
             time: "",
             notes: "External steering notes uploaded into Z PM. Go-live window confirmed for summer 2027.",
             isDecision: false,
@@ -914,7 +914,7 @@ export function createSeed() {
   };
 }
 
-function user(id, firstName, lastName, phone, email, role, permission, comments) {
+function user(id, firstName, lastName, phone, email, role, permission, comments, password = "demo") {
   return {
     id,
     firstName,
@@ -924,7 +924,7 @@ function user(id, firstName, lastName, phone, email, role, permission, comments)
     role,
     permission,
     comments,
-    password: "demo",
+    password,
   };
 }
 

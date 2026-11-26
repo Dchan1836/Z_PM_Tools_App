@@ -134,8 +134,8 @@ export default function App() {
 function Login() {
   const dispatch = useAppDispatch();
   const notice = useUi().notice;
-  const [email, setEmail] = useState("zulfi@zpm.local");
-  const [password, setPassword] = useState("demo");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   async function submit(event) {
@@ -152,30 +152,30 @@ function Login() {
         <p>Project schedule tracking for the next 30, 60, and 90 days. Dashboards, a master plan, negotiated assignments, meetings, trackers, and root-cause views live in one place.</p>
       </section>
       <section className="login-panel">
-        <form className="login-card" onSubmit={submit}>
+        <form className="login-card" onSubmit={submit} autoComplete="off">
           <h2>Sign in</h2>
-          <p className="muted">Every account uses the password <b>demo</b>.</p>
           {notice ? <div className="banner warn" style={{ marginTop: 10 }}>{notice}</div> : null}
           {error ? <div className="banner error" style={{ marginTop: 10 }}>{error}</div> : null}
           <div className="stack" style={{ marginTop: 12 }}>
             <label className="field">Email
-              <input value={email} onChange={(event) => setEmail(event.target.value)} />
+              <input
+                type="email"
+                name="email"
+                value={email}
+                autoComplete="off"
+                onChange={(event) => setEmail(event.target.value)}
+              />
             </label>
             <label className="field">Password
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              <input
+                type="password"
+                name="password"
+                value={password}
+                autoComplete="new-password"
+                onChange={(event) => setPassword(event.target.value)}
+              />
             </label>
             <button className="btn navy" type="submit">Enter the project</button>
-          </div>
-          <div className="accounts">
-            <button type="button" onClick={() => { setEmail("zulfi@zpm.local"); setPassword("demo"); }}>
-              Zulfi Khan — Super Admin, sees every dashboard
-            </button>
-            <button type="button" onClick={() => { setEmail("harry.leggs@zpm.local"); setPassword("demo"); }}>
-              Harry Leggs — task owner, saved view and a task to accept
-            </button>
-            <button type="button" onClick={() => { setEmail("ivana.runn@zpm.local"); setPassword("demo"); }}>
-              Ivana Runn — proposed a new timeline
-            </button>
           </div>
         </form>
       </section>

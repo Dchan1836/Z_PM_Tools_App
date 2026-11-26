@@ -8,8 +8,8 @@ function project() {
   return structuredClone(createSeed());
 }
 
-function zulfi(db) {
-  return db.users.find((user) => user.id === "u-zulfi");
+function steve(db) {
+  return db.users.find((user) => user.id === "u-steve");
 }
 
 test.beforeEach(() => {
@@ -22,7 +22,7 @@ test("a project question is answered from retrieved records", async () => {
   const result = await answerProjectQuestion({
     question: "Who owns the task Supervisor Interviews?",
     db,
-    user: zulfi(db),
+    user: steve(db),
     client: llm,
   });
 
@@ -41,7 +41,7 @@ test("a workflow request opens a review draft with directory ids", async () => {
   const result = await answerProjectQuestion({
     question: "Create a workflow named Badge pickup at Portland in Training. Tasks: Print badges owned by Harry Leggs, then Hand out badges owned by Sally Nguyen. Dates 2026-12-01 to 2026-12-15.",
     db,
-    user: zulfi(db),
+    user: steve(db),
     client: llm,
   });
 
@@ -51,7 +51,7 @@ test("a workflow request opens a review draft with directory ids", async () => {
   assert.equal(result.workflow.pillar, "Training");
   assert.equal(result.workflow.plannedStart, "2026-12-01");
   assert.equal(result.workflow.plannedEnd, "2026-12-15");
-  assert.equal(result.workflow.ownerId, "u-zulfi");
+  assert.equal(result.workflow.ownerId, "u-steve");
   assert.deepEqual(result.workflow.steps.map((step) => step.name), ["Print badges", "Hand out badges"]);
   assert.deepEqual(result.workflow.steps.map((step) => step.ownerId), ["u-harry", "u-sally"]);
   assert.match(result.answer, /You are set as the owner/);
@@ -63,13 +63,13 @@ test("a workflow task with no owner is assigned to the person who asked", async 
   const result = await answerProjectQuestion({
     question: "Create a workflow named Badge pickup at Portland in Training. Tasks: Print badges, then Hand out badges owned by Sally Nguyen. Dates 2026-12-01 to 2026-12-15.",
     db,
-    user: zulfi(db),
+    user: steve(db),
     client: createMockLlm(),
   });
 
-  assert.equal(result.workflow.ownerId, "u-zulfi");
+  assert.equal(result.workflow.ownerId, "u-steve");
   assert.deepEqual(result.workflow.steps.map((step) => [step.name, step.ownerId]), [
-    ["Print badges", "u-zulfi"],
+    ["Print badges", "u-steve"],
     ["Hand out badges", "u-sally"],
   ]);
   assert.match(result.answer, /assigned to you/);
@@ -80,12 +80,12 @@ test("an unknown workflow owner is left blank and named in the reply", async () 
   const result = await answerProjectQuestion({
     question: "Create a workflow named Room check at Atlantis in Training. Tasks: Walk the rooms owned by Nobody Special. Dates 2026-12-01 to 2026-12-02.",
     db,
-    user: zulfi(db),
+    user: steve(db),
     client: createMockLlm(),
   });
 
   assert.equal(result.intent, "workflow");
-  assert.equal(result.workflow.ownerId, "u-zulfi");
+  assert.equal(result.workflow.ownerId, "u-steve");
   assert.equal(result.workflow.steps[0].ownerId, "");
   assert.equal(result.workflow.siteId, "");
   assert.match(result.answer, /Nobody Special/);
@@ -113,7 +113,7 @@ test("meeting notes in the chat are returned for the create form", async () => {
   const result = await answerProjectQuestion({
     question: "Create a meeting from these notes:\nDate: 2026-12-02\nHarry Leggs said the printers slipped.",
     db,
-    user: zulfi(db),
+    user: steve(db),
     client: llm,
   });
 
@@ -127,7 +127,7 @@ test("an empty question does not call the model", async () => {
   const db = project();
   const llm = createMockLlm();
   await assert.rejects(
-    answerProjectQuestion({ question: "  ", db, user: zulfi(db), client: llm }),
+    answerProjectQuestion({ question: "  ", db, user: steve(db), client: llm }),
     /Ask a question/,
   );
   assert.equal(llm.calls.length, 0);
@@ -136,7 +136,7 @@ test("an empty question does not call the model", async () => {
 test("chat is refused when no model client and no API key are available", async () => {
   const db = project();
   await assert.rejects(
-    answerProjectQuestion({ question: "Who owns Printer Deployment?", db, user: zulfi(db) }),
+    answerProjectQuestion({ question: "Who owns Printer Deployment?", db, user: steve(db) }),
     /OPENAI_API_KEY/,
   );
 });
@@ -151,7 +151,7 @@ test("a model failure stays on the mock client", async () => {
     },
   });
   await assert.rejects(
-    answerProjectQuestion({ question: "Who owns the task Supervisor Interviews?", db, user: zulfi(db), client: denied }),
+    answerProjectQuestion({ question: "Who owns the task Supervisor Interviews?", db, user: steve(db), client: denied }),
     /rejected the API key/,
   );
 
@@ -163,7 +163,7 @@ test("a model failure stays on the mock client", async () => {
     },
   });
   await assert.rejects(
-    answerProjectQuestion({ question: "Who owns the task Supervisor Interviews?", db, user: zulfi(db), client: missing }),
+    answerProjectQuestion({ question: "Who owns the task Supervisor Interviews?", db, user: steve(db), client: missing }),
     /not available/,
   );
 });

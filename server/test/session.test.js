@@ -91,7 +91,7 @@ test("a wrong password does not count as a session timeout", async () => {
     expired += 1;
   });
   globalThis.fetch = async () => jsonResponse(401, { error: "Email or password does not match a Z PM account." });
-  const error = await api.login("zulfi@zpm.local", "nope").catch((reason) => reason);
+  const error = await api.login("steve@zpm.local", "nope").catch((reason) => reason);
   assert.equal(error.status, 401);
   assert.equal(api.getToken(), "still-good");
   assert.equal(expired, 0);
